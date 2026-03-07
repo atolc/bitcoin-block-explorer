@@ -2,7 +2,7 @@ import * as React from "react"
 import { Link, useLocation } from "react-router"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { SearchBar } from "@/components/bitcoin/search-bar"
+import { SearchBar, type SearchType } from "@/components/bitcoin/search-bar"
 import { Button } from "@/components/ui/button"
 import {
     Sheet,
@@ -28,7 +28,7 @@ const defaultNavItems: NavItem[] = [
 export interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
     navItems?: NavItem[]
     showSearch?: boolean
-    onSearch?: (value: string) => void
+    onSearch?: (value: string, type: SearchType) => void
 }
 
 const Header = React.forwardRef<HTMLElement, HeaderProps>(
@@ -93,7 +93,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
                             <div className="hidden lg:block w-full">
                                 <SearchBar
                                     variant="compact"
-                                    onSearch={(val) => onSearch?.(val)}
+                                    onSearch={(val, type) => onSearch?.(val, type)}
                                 />
                             </div>
                         )}
@@ -124,8 +124,8 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
                                         <div className="px-2 mb-4">
                                             <SearchBar
                                                 variant="default"
-                                                onSearch={(val) => {
-                                                    onSearch?.(val)
+                                                onSearch={(val, type) => {
+                                                    onSearch?.(val, type)
                                                     setIsOpen(false)
                                                 }}
                                             />

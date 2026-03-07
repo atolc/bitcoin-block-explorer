@@ -20,6 +20,7 @@ import { useSharedNetworkStats } from "@/layouts/root-layout"
 import { Link } from "react-router"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { useSearch } from "@/hooks/use-search"
 
 // ─── Skeleton Loader ───────────────────────────────────────────
 function Skeleton({ className = "" }: { className?: string }) {
@@ -55,6 +56,8 @@ export default function HomePage() {
         unconfirmedTxs: 0,
     }
 
+    const { handleSearch } = useSearch()
+
     return (
         <>
             {/* Hero Section */}
@@ -73,7 +76,7 @@ export default function HomePage() {
                             Bitcoin Testnet4 network in real-time.
                         </p>
                         <div className="mt-8">
-                            <SearchBar variant="hero" />
+                            <SearchBar variant="hero" onSearch={handleSearch} />
                         </div>
                     </div>
                 </div>

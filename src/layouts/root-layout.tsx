@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { NetworkStatus } from "@/components/bitcoin/network-status"
 import { useNetworkStats } from "@/hooks/use-api"
+import { useSearch } from "@/hooks/use-search"
 import { createContext, useContext } from "react"
 import type { NetworkStats } from "@/types"
 
@@ -39,6 +40,8 @@ export default function RootLayout() {
         unconfirmedTxs: 0,
     }
 
+    const { handleSearch } = useSearch()
+
     return (
         <NetworkStatsContext.Provider value={networkStats}>
             <div className="flex min-h-screen flex-col bg-background">
@@ -50,7 +53,7 @@ export default function RootLayout() {
                 />
 
                 {/* Header */}
-                <Header />
+                <Header onSearch={handleSearch} />
 
                 {/* Page Content */}
                 <main className="flex-1">
