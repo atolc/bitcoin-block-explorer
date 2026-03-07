@@ -4,6 +4,7 @@ import type {
     BlockDetail,
     TransactionSummary,
     NetworkStats,
+    PaginatedResponse,
 } from "@/types"
 
 // ─── Base Fetch ────────────────────────────────────────────────
@@ -36,6 +37,13 @@ export async function fetchLatestBlocks(
     count = 5
 ): Promise<BlockSummary[]> {
     return apiFetch<BlockSummary[]>(`/blocks/latest?count=${count}`)
+}
+
+export async function fetchPaginatedBlocks(
+    page = 1,
+    limit = 10
+): Promise<PaginatedResponse<BlockSummary>> {
+    return apiFetch<PaginatedResponse<BlockSummary>>(`/blocks?page=${page}&limit=${limit}`)
 }
 
 export async function fetchBlock(hash: string): Promise<BlockDetail> {

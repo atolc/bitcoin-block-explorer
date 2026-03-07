@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { getLatestBlocks, getBlockByHashOrHeight } from '../services/blocks.service.js';
+import { getLatestBlocks, getBlockByHashOrHeight, getPaginatedBlocks } from '../services/blocks.service.js';
 import { createApiError } from '../middlewares/error.middleware.js';
 
 /**
@@ -17,6 +17,25 @@ export async function getLatest(
         res.json({ success: true, data: blocks });
     } catch (error) {
         next(createApiError('Failed to fetch latest blocks', 502, error));
+    }
+}
+
+/**
+ * GET /api/blocks
+ * Returns paginated blocks.
+ */
+export async function getPaginated(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const result = await getPaginatedBlocks(page, limit);
+        res.json({ success: true, data: result });
+    } catch (error) {
+        next(createApiError('Failed to fetch paginated blocks', 502, error));
     }
 }
 

@@ -5,11 +5,9 @@ import {
     getCoreRowModel,
     getSortedRowModel,
     getPaginationRowModel,
-    getFilteredRowModel,
     useReactTable,
     type SortingState,
     type VisibilityState,
-    type ColumnFiltersState,
 } from "@tanstack/react-table"
 import { cn } from "@/lib/utils"
 import {
@@ -21,9 +19,8 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { HashDisplay } from "./hash-display"
-import { ArrowUpDown, ChevronLeft, ChevronRight, Search } from "lucide-react"
+import { ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react"
 import type { BlockSummary } from "@/types"
 import { Link } from "react-router"
 
@@ -123,8 +120,16 @@ const defaultColumns: ColumnDef<BlockSummary>[] = [
 export interface BlockTableProps extends React.HTMLAttributes<HTMLDivElement> {
     data: BlockSummary[]
     columns?: ColumnDef<BlockSummary>[]
-    pageSize?: number
+    pageCount?: number
+    pagination?: { pageIndex: number; pageSize: number }
+    onPaginationChange?: (updater: import("@tanstack/react-table").Updater<import("@tanstack/react-table").PaginationState>) => void
     showPagination?: boolean
+    isLoading?: boolean
+}
+
+// ─── Skeleton Loader ───────────────────────────────────────────
+function Skeleton({ className = "" }: { className?: string }) {
+    return <div className={`animate-pulse rounded-md bg-muted ${className}`} />
 }
 
 const BlockTable = React.forwardRef<HTMLDivElement, BlockTableProps>(
@@ -133,54 +138,49 @@ const BlockTable = React.forwardRef<HTMLDivElement, BlockTableProps>(
             className,
             data,
             columns = defaultColumns,
-            pageSize = 10,
+            pageCount = -1,
+            pagination,
+            onPaginationChange,
             showPagination = true,
+            isLoading = false,
             ...props
         },
         ref
     ) => {
         const [sorting, setSorting] = React.useState<SortingState>([])
-        const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
         const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-        const [globalFilter, setGlobalFilter] = React.useState("")
+
+        const isManualPagination = pagination !== undefined && onPaginationChange !== undefined
 
         const table = useReactTable({
             data,
             columns,
+            pageCount: isManualPagination ? pageCount : -1,
             getCoreRowModel: getCoreRowModel(),
             getSortedRowModel: getSortedRowModel(),
             getPaginationRowModel: getPaginationRowModel(),
-            getFilteredRowModel: getFilteredRowModel(),
             onSortingChange: setSorting,
-            onColumnFiltersChange: setColumnFilters,
-            onGlobalFilterChange: setGlobalFilter,
             onColumnVisibilityChange: setColumnVisibility,
+            ...(isManualPagination && {
+                manualPagination: true,
+                onPaginationChange: onPaginationChange,
+            }),
             state: {
                 sorting,
-                columnFilters,
-                globalFilter,
                 columnVisibility,
+                ...(isManualPagination && { pagination }),
             },
-            initialState: {
-                pagination: {
-                    pageSize,
+            ...(!isManualPagination && {
+                initialState: {
+                    pagination: {
+                        pageSize: 10,
+                    },
                 },
-            },
+            }),
         })
 
         return (
             <div ref={ref} className={cn("space-y-4", className)} {...props}>
-                <div className="flex items-center justify-between">
-                    <div className="relative w-full max-w-sm">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Filter by hash, miner or height..."
-                            value={globalFilter ?? ""}
-                            onChange={(event) => setGlobalFilter(event.target.value)}
-                            className="pl-9 h-9"
-                        />
-                    </div>
-                </div>
 
                 <div className="rounded-lg border overflow-hidden">
                     <Table>
@@ -207,7 +207,17 @@ const BlockTable = React.forwardRef<HTMLDivElement, BlockTableProps>(
                             ))}
                         </TableHeader>
                         <TableBody>
-                            {table.getRowModel().rows?.length ? (
+                            {isLoading ? (
+                                Array.from({ length: table.getState().pagination.pageSize }).map((_, i) => (
+                                    <TableRow key={`skeleton-${i}`}>
+                                        {columns.map((_, colIdx) => (
+                                            <TableCell key={colIdx} className="py-4">
+                                                <Skeleton className="h-5 w-full max-w-[120px]" />
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            ) : table.getRowModel().rows?.length ? (
                                 table.getRowModel().rows.map((row) => (
                                     <TableRow
                                         key={row.id}
@@ -251,12 +261,12 @@ const BlockTable = React.forwardRef<HTMLDivElement, BlockTableProps>(
                                 {Math.min(
                                     (table.getState().pagination.pageIndex + 1) *
                                     table.getState().pagination.pageSize,
-                                    table.getFilteredRowModel().rows.length
+                                    isManualPagination ? (table.getPageCount() * table.getState().pagination.pageSize) : table.getRowModel().rows.length
                                 )}
                             </span>{" "}
                             of{" "}
                             <span className="font-medium text-foreground">
-                                {table.getFilteredRowModel().rows.length.toLocaleString()}
+                                {isManualPagination ? (table.getPageCount() * table.getState().pagination.pageSize).toLocaleString() : table.getRowModel().rows.length.toLocaleString()}
                             </span>{" "}
                             blocks
                         </p>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import {
     fetchNetworkStats,
     fetchLatestBlocks,
+    fetchPaginatedBlocks,
     fetchBlock,
     fetchLatestTransactions,
 } from "@/services/api"
@@ -12,6 +13,7 @@ import type {
     BlockSummary,
     BlockDetail,
     TransactionSummary,
+    PaginatedResponse,
 } from "@/types"
 
 // ─── Generic hook state ────────────────────────────────────────
@@ -78,6 +80,38 @@ export function useLatestBlocks(count = 4) {
         interval,
         [count]
     )
+}
+
+export function usePaginatedBlocks(page: number, limit: number) {
+    const [state, setState] = useState<UseApiState<PaginatedResponse<BlockSummary>>>({
+        data: null,
+        loading: true,
+        error: null,
+    })
+
+    useEffect(() => {
+        let mounted = true
+        setState((prev) => ({ ...prev, loading: true, error: null }))
+
+        fetchPaginatedBlocks(page, limit)
+            .then((data) => {
+                if (mounted) setState({ data, loading: false, error: null })
+            })
+            .catch((err) => {
+                if (mounted)
+                    setState({
+                        data: null,
+                        loading: false,
+                        error: err instanceof Error ? err.message : "Unknown error",
+                    })
+            })
+
+        return () => {
+            mounted = false
+        }
+    }, [page, limit])
+
+    return state
 }
 
 export function useBlock(hash?: string) {

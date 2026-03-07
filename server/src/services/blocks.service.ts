@@ -1,5 +1,5 @@
 import { blockchainService } from './blockchain.service.js';
-import type { BlockSummary, BlockDetail } from '../types/index.js';
+import type { BlockSummary, BlockDetail, PaginatedResponse } from '../types/index.js';
 
 // ─── Bitcoin Core REST response types ──────────────────────────
 
@@ -104,6 +104,71 @@ export async function getLatestBlocks(count = 5): Promise<BlockSummary[]> {
     return blocks;
 }
 
+export async function getPaginatedBlocks(
+    page = 1,
+    limit = 10
+): Promise<PaginatedResponse<BlockSummary>> {
+
+    // 1. Get chain info
+    const chainInfo = await blockchainService.get<ChainInfo>('/chaininfo');
+    const totalBlocks = chainInfo.blocks;
+
+    const totalPages = Math.ceil(totalBlocks / limit);
+
+    if (page < 1 || page > totalPages) {
+        return {
+            data: [],
+            total: totalBlocks,
+            page,
+            limit,
+            totalPages
+        };
+    }
+
+    // 2. Calculate starting height
+    const startHeight = totalBlocks - ((page - 1) * limit);
+
+    // 3. Generate heights (descending)
+    const heights = Array.from({ length: limit }, (_, i) => startHeight - i)
+        .filter(h => h >= 0);
+
+    // 4. Fetch hashes in parallel
+    const hashes = await Promise.all(
+        heights.map(height =>
+            blockchainService.get<{ blockhash: string }>(`/blockhashbyheight/${height}`)
+        )
+    );
+
+    // 5. Fetch blocks in parallel
+    const blocks = await Promise.all(
+        hashes.map(async ({ blockhash }) => {
+
+            const block = await blockchainService.get<BlockResponse>(
+                `/block/notxdetails/${blockhash}`
+            );
+
+            const coinbaseText = await getCoinbaseText(blockhash);
+
+            return {
+                height: block.height,
+                hash: block.hash,
+                timestamp: new Date(block.time * 1000),
+                txCount: block.nTx,
+                size: block.size,
+                miner: identifyMiner(coinbaseText),
+                confirmations: block.confirmations
+            } as BlockSummary;
+        })
+    );
+
+    return {
+        data: blocks,
+        total: totalBlocks,
+        page,
+        limit,
+        totalPages
+    };
+}
 export async function getBlockByHashOrHeight(
     identifier: string
 ): Promise<BlockDetail> {
