@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link, useLocation } from "react-router"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { SearchBar } from "@/components/bitcoin/search-bar"
@@ -36,6 +37,11 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
         ref
     ) => {
         const [isOpen, setIsOpen] = React.useState(false)
+        const location = useLocation()
+
+        function isActive(href: string) {
+            return location.pathname === href || location.pathname.startsWith(href + "/")
+        }
 
         return (
             <header
@@ -48,7 +54,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
             >
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 md:px-6">
                     {/* Logo */}
-                    <a href="/" className="flex items-center gap-2.5 shrink-0">
+                    <Link to="/" className="flex items-center gap-2.5 shrink-0">
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-bitcoin text-bitcoin-foreground">
                             <Bitcoin className="h-5 w-5" />
                         </div>
@@ -60,19 +66,24 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
                                 Explorer
                             </span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-1">
                         {navItems.map((item) => (
-                            <a
+                            <Link
                                 key={item.href}
-                                href={item.href}
-                                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                                to={item.href}
+                                className={cn(
+                                    "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                    isActive(item.href)
+                                        ? "bg-accent text-accent-foreground"
+                                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                )}
                             >
                                 <item.icon className="h-4 w-4" />
                                 {item.label}
-                            </a>
+                            </Link>
                         ))}
                     </nav>
 
@@ -125,15 +136,20 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
 
                                 <nav className="flex flex-col gap-1 px-2">
                                     {navItems.map((item) => (
-                                        <a
+                                        <Link
                                             key={item.href}
-                                            href={item.href}
-                                            className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                                            to={item.href}
+                                            className={cn(
+                                                "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                                                isActive(item.href)
+                                                    ? "bg-accent text-accent-foreground"
+                                                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                            )}
                                             onClick={() => setIsOpen(false)}
                                         >
                                             <item.icon className="h-4 w-4" />
                                             {item.label}
-                                        </a>
+                                        </Link>
                                     ))}
                                 </nav>
                             </SheetContent>
