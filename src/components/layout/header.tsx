@@ -62,8 +62,8 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
                             <span className="font-heading text-lg font-bold tracking-tight">
                                 BTC
                             </span>
-                            <span className="font-heading text-lg font-light text-muted-foreground">
-                                Explorer
+                            <span className="font-heading text-lg font-light text-muted-foreground ml-1">
+                                Testnet4
                             </span>
                         </div>
                     </Link>
@@ -116,7 +116,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
                                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-bitcoin text-bitcoin-foreground">
                                         <Bitcoin className="h-4 w-4" />
                                     </div>
-                                    <span className="font-heading font-bold">BTC Explorer</span>
+                                    <span className="font-heading font-bold">BTC Testnet4</span>
                                 </SheetTitle>
 
                                 {showSearch && (

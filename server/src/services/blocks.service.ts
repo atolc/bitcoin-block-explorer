@@ -1,28 +1,32 @@
 import { blockchainService } from './blockchain.service.js';
 import type { BlockSummary } from '../types/index.js';
 
-// ─── Blockchain.info API response types ────────────────────────
+// ─── Bitcoin Core REST response types ──────────────────────────
 
-interface BlockchainBlockResponse {
-    height: number;
-    hash: string;
-    time: number;
-    n_tx: number;
-    size: number;
-    block_index: number;
-    main_chain: boolean;
-    prev_block: string;
-    mrkl_root: string;
-    bits: number;
-    nonce: number;
-    tx: Array<{ hash: string }>;
+interface ChainInfo {
+    chain: string;
+    blocks: number;
+    bestblockhash: string;
+    difficulty: number;
 }
 
-interface LatestBlockResponse {
+interface BlockResponse {
     hash: string;
+    confirmations: number;
     height: number;
+    version: number;
+    merkleroot: string;
     time: number;
-    block_index: number;
+    mediantime: number;
+    nonce: number;
+    bits: string;
+    difficulty: number;
+    nTx: number;
+    previousblockhash?: string;
+    size: number;
+    strippedsize: number;
+    weight: number;
+    tx: string[];  // tx hashes only (notxdetails)
 }
 
 // ─── Known mining pool identification ──────────────────────────
@@ -37,46 +41,64 @@ const KNOWN_POOLS: Record<string, string> = {
     'SlushPool': 'Braiins Pool',
 };
 
-function identifyMiner(_coinbaseText: string): string {
+function identifyMiner(coinbaseText: string): string {
     for (const [key, name] of Object.entries(KNOWN_POOLS)) {
-        if (_coinbaseText.includes(key)) return name;
+        if (coinbaseText.includes(key)) return name;
     }
     return 'Unknown';
+}
+
+// ─── Helpers ───────────────────────────────────────────────────
+
+/** Try to extract the coinbase text from the first tx of a block */
+async function getCoinbaseText(blockHash: string): Promise<string> {
+    try {
+        // Fetch full block (with tx details) to get coinbase
+        const url = `/block/${blockHash}`;
+        const block = await blockchainService.get<{
+            tx: Array<{ vin: Array<{ coinbase?: string }> }>;
+        }>(url);
+
+        const coinbaseHex = block.tx?.[0]?.vin?.[0]?.coinbase;
+        if (!coinbaseHex) return '';
+
+        // Decode hex to ASCII (best-effort)
+        return Buffer.from(coinbaseHex, 'hex').toString('ascii');
+    } catch {
+        return '';
+    }
 }
 
 // ─── Service ───────────────────────────────────────────────────
 
 export async function getLatestBlocks(count = 5): Promise<BlockSummary[]> {
-    // Get the latest block hash
-    const latestBlock = await blockchainService.get<LatestBlockResponse>(
-        '/latestblock'
-    );
+    // 1. Get the best block hash from chain info
+    const chainInfo = await blockchainService.get<ChainInfo>('/chaininfo');
 
-    // Get block details for the latest block
-    const block = await blockchainService.get<BlockchainBlockResponse>(
-        `/rawblock/${latestBlock.hash}`
-    );
-
-    // Build the list starting from the latest block
+    // 2. Walk backwards from the tip
     const blocks: BlockSummary[] = [];
-    let currentBlock = block;
+    let currentHash = chainInfo.bestblockhash;
 
     for (let i = 0; i < count; i++) {
+        const block = await blockchainService.get<BlockResponse>(
+            `/block/notxdetails/${currentHash}`
+        );
+
+        // Best-effort miner identification from coinbase
+        const coinbaseText = await getCoinbaseText(currentHash);
+
         blocks.push({
-            height: currentBlock.height,
-            hash: currentBlock.hash,
-            timestamp: new Date(currentBlock.time * 1000),
-            txCount: currentBlock.n_tx,
-            size: currentBlock.size,
-            miner: identifyMiner(''), // Coinbase not available in raw block
-            confirmations: latestBlock.height - currentBlock.height + 1,
+            height: block.height,
+            hash: block.hash,
+            timestamp: new Date(block.time * 1000),
+            txCount: block.nTx,
+            size: block.size,
+            miner: identifyMiner(coinbaseText),
+            confirmations: block.confirmations,
         });
 
-        if (i < count - 1 && currentBlock.prev_block) {
-            currentBlock = await blockchainService.get<BlockchainBlockResponse>(
-                `/rawblock/${currentBlock.prev_block}`
-            );
-        }
+        if (!block.previousblockhash) break;
+        currentHash = block.previousblockhash;
     }
 
     return blocks;
@@ -85,24 +107,31 @@ export async function getLatestBlocks(count = 5): Promise<BlockSummary[]> {
 export async function getBlockByHashOrHeight(
     identifier: string
 ): Promise<BlockSummary> {
-    // If it looks like a height (numeric), convert to hash first
-    const endpoint = /^\d+$/.test(identifier)
-        ? `/block-height/${identifier}?format=json`
-        : `/rawblock/${identifier}`;
+    let blockHash: string;
 
-    const block = await blockchainService.get<BlockchainBlockResponse>(endpoint);
+    if (/^\d+$/.test(identifier)) {
+        // Height → fetch the hash first
+        const hashResponse = await blockchainService.get<{ blockhash: string }>(
+            `/blockhashbyheight/${identifier}`
+        );
+        blockHash = hashResponse.blockhash;
+    } else {
+        blockHash = identifier;
+    }
 
-    const latestBlock = await blockchainService.get<LatestBlockResponse>(
-        '/latestblock'
+    const block = await blockchainService.get<BlockResponse>(
+        `/block/notxdetails/${blockHash}`
     );
+
+    const coinbaseText = await getCoinbaseText(blockHash);
 
     return {
         height: block.height,
         hash: block.hash,
         timestamp: new Date(block.time * 1000),
-        txCount: block.n_tx,
+        txCount: block.nTx,
         size: block.size,
-        miner: identifyMiner(''),
-        confirmations: latestBlock.height - block.height + 1,
+        miner: identifyMiner(coinbaseText),
+        confirmations: block.confirmations,
     };
 }

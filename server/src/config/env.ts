@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
 
-// Load .env from root directory
-dotenv.config({ path: path.resolve(import.meta.dirname, '../../.env') });
+// Load .env from root directory (server/src/config -> server/src -> server -> root)
+dotenv.config({ path: path.resolve(import.meta.dirname, '../../../.env') });
 
 export interface EnvConfig {
     port: number;

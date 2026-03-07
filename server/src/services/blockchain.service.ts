@@ -1,45 +1,34 @@
 import { env } from '../config/env.js';
 
 /**
- * Generic HTTP client for the Blockchain API.
- * All external API calls go through this service.
+ * HTTP client for a Bitcoin Core REST API.
+ * Base URL should point to the /rest endpoint (e.g. http://host/rest).
  */
 class BlockchainService {
     private baseUrl: string;
-    private apiToken: string;
 
     constructor() {
-        this.baseUrl = env.blockchain.apiUrl;
-        this.apiToken = env.blockchain.apiToken;
+        // Strip trailing slash for clean concatenation
+        this.baseUrl = env.blockchain.apiUrl.replace(/\/+$/, '');
     }
 
     /**
-     * Performs a GET request to the blockchain API.
+     * Performs a GET request to the Bitcoin Core REST API.
+     * Appends `.json` to the endpoint automatically.
      */
-    async get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
-        const url = new URL(endpoint, this.baseUrl);
+    async get<T>(endpoint: string): Promise<T> {
+        // Handle query parameters and ensure .json extension
+        const [pathPart, queryPart] = endpoint.split('?');
+        const extension = pathPart.endsWith('.json') ? '' : '.json';
+        const url = `${this.baseUrl}${pathPart}${extension}${queryPart ? `?${queryPart}` : ''}`;
 
-        // Add query parameters
-        if (params) {
-            Object.entries(params).forEach(([key, value]) => {
-                url.searchParams.set(key, value);
-            });
-        }
-
-        // Add API token if available
-        if (this.apiToken) {
-            url.searchParams.set('api_code', this.apiToken);
-        }
-
-        const response = await fetch(url.toString(), {
-            headers: {
-                'Accept': 'application/json',
-            },
+        const response = await fetch(url, {
+            headers: { 'Accept': 'application/json' },
         });
 
         if (!response.ok) {
             throw new Error(
-                `Blockchain API error: ${response.status} ${response.statusText}`
+                `Blockchain REST error: ${response.status} ${response.statusText} (${url})`
             );
         }
 
