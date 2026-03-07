@@ -44,3 +44,14 @@ export async function fetchLatestTransactions(
         `/transactions/latest?count=${count}`
     )
 }
+
+// ─── Config ────────────────────────────────────────────────────
+
+export interface ApiConfig {
+    apiUrl: string
+}
+
+export async function fetchApiConfig(): Promise<ApiConfig> {
+    return apiFetch<ApiConfig>("/config")
+}
+

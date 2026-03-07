@@ -4,6 +4,8 @@ import {
     fetchLatestBlocks,
     fetchLatestTransactions,
 } from "@/services/api"
+import { useApiConfig } from "@/providers/api-config-provider"
+import { THROTTLED_INTERVAL_MS } from "@/config/rate-limit.config"
 import type {
     NetworkStats,
     BlockSummary,
@@ -52,24 +54,35 @@ function usePolling<T>(
     return { ...state, refetch: load }
 }
 
+// ─── Interval helper ───────────────────────────────────────────
+// When the API is throttled, enforce a minimum polling interval.
+
+function useThrottledInterval(baseMs: number): number {
+    const { isThrottled } = useApiConfig()
+    return isThrottled ? Math.max(baseMs, THROTTLED_INTERVAL_MS) : baseMs
+}
+
 // ─── Hooks ─────────────────────────────────────────────────────
 
 export function useNetworkStats() {
-    return usePolling<NetworkStats>(fetchNetworkStats, 30_000)
+    const interval = useThrottledInterval(30_000)
+    return usePolling<NetworkStats>(fetchNetworkStats, interval)
 }
 
 export function useLatestBlocks(count = 4) {
+    const interval = useThrottledInterval(60_000)
     return usePolling<BlockSummary[]>(
         () => fetchLatestBlocks(count),
-        60_000,
+        interval,
         [count]
     )
 }
 
 export function useLatestTransactions(count = 10) {
+    const interval = useThrottledInterval(15_000)
     return usePolling<TransactionSummary[]>(
         () => fetchLatestTransactions(count),
-        15_000,
+        interval,
         [count]
     )
 }
