@@ -77,6 +77,10 @@ export async function fetchLatestTransactions(
     )
 }
 
+export async function fetchTransaction(hash: string): Promise<Transaction> {
+    return apiFetch<Transaction>(`/transactions/${hash}`)
+}
+
 // ─── Config ────────────────────────────────────────────────────
 
 export interface ApiConfig {

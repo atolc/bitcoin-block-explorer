@@ -83,27 +83,113 @@ export async function getPaginatedTransactions(
     };
 }
 
+interface BitcoinRestTx {
+    txid: string;
+    hash: string;
+    version: number;
+    size: number;
+    vsize: number;
+    weight: number;
+    locktime: number;
+    vin: Array<{
+        txid: string;
+        vout: number;
+        scriptSig: { asm: string; hex: string };
+        sequence: number;
+        prevout?: {
+            value: number;
+            scriptPubKey: {
+                asm: string;
+                hex: string;
+                address?: string;
+                type: string;
+            };
+        };
+    }>;
+    vout: Array<{
+        value: number;
+        n: number;
+        scriptPubKey: {
+            asm: string;
+            hex: string;
+            address?: string;
+            type: string;
+        };
+    }>;
+    blockhash?: string;
+    confirmations?: number;
+    time?: number;
+    blocktime?: number;
+}
+
 export async function getTransactionByHash(
     hash: string
-): Promise<TransactionSummary> {
-    // Try to find the tx in mempool contents
-    const contents = await blockchainService.get<MempoolContents>(
-        '/mempool/contents'
-    );
+): Promise<TransactionSummary | Transaction> {
+    try {
+        // Fetch full transaction data from Bitcoin REST API
+        const tx = await blockchainService.get<BitcoinRestTx>(`/tx/${hash}`);
 
-    const entry = contents[hash];
+        // Calculate total input value (available if we have prevout info)
+        let totalInput = 0;
+        const inputs = tx.vin.map(vin => {
+            const val = vin.prevout?.value || 0;
+            totalInput += val;
+            return {
+                prevOut: {
+                    hash: vin.txid,
+                    value: val,
+                    addr: vin.prevout?.scriptPubKey.address
+                }
+            };
+        });
 
-    if (!entry) {
-        throw new Error(`Transaction ${hash} not found in mempool`);
+        // Calculate total output value
+        let totalOutput = 0;
+        const outputs = tx.vout.map(vout => {
+            totalOutput += vout.value;
+            return {
+                value: vout.value,
+                addr: vout.scriptPubKey.address,
+                script: vout.scriptPubKey.asm
+            };
+        });
+
+        // Fee is input - output (if input info is available)
+        const fee = totalInput > 0 ? (totalInput - totalOutput) : 0;
+
+        return {
+            hash: tx.hash,
+            from: totalInput > 0 ? totalInput.toFixed(8) : 'Unknown',
+            to: totalOutput.toFixed(8),
+            value: totalOutput.toFixed(8),
+            fee: fee.toFixed(8),
+            confirmations: tx.confirmations || 0,
+            timestamp: tx.time ? new Date(tx.time * 1000).toISOString() : new Date().toISOString(),
+            size: tx.size,
+            weight: tx.weight,
+            inputs,
+            outputs
+        };
+    } catch (error) {
+        // Fallback to mempool search if REST /tx/ fails or if preferred
+        const contents = await blockchainService.get<MempoolContents>(
+            '/mempool/contents'
+        );
+
+        const entry = contents[hash];
+
+        if (!entry) {
+            throw new Error(`Transaction ${hash} not found`);
+        }
+
+        return {
+            hash,
+            from: `${entry.vsize} vB`,
+            to: entry['bip125-replaceable'] ? 'RBF' : 'Non-RBF',
+            value: entry.fees.base.toFixed(8),
+            fee: entry.fees.base.toFixed(8),
+            confirmations: 0,
+            timestamp: new Date(entry.time * 1000).toISOString(),
+        };
     }
-
-    return {
-        hash,
-        from: `${entry.vsize} vB`,
-        to: entry['bip125-replaceable'] ? 'RBF' : 'Non-RBF',
-        value: entry.fees.base.toFixed(8),
-        fee: entry.fees.base.toFixed(8),
-        confirmations: 0,
-        timestamp: new Date(entry.time * 1000).toISOString(),
-    };
 }

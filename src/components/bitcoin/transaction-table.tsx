@@ -64,19 +64,26 @@ function ConfirmationBadge({ confirmations }: { confirmations: number }) {
     )
 }
 
+import { Link } from "react-router"
+
 const defaultColumns: ColumnDef<TransactionData>[] = [
     {
         accessorKey: "hash",
         header: "TX Hash",
-        cell: ({ row }) => (
-            <HashDisplay
-                hash={row.getValue("hash")}
-                variant="truncated"
-                size="sm"
-                startChars={6}
-                endChars={6}
-            />
-        ),
+        cell: ({ row }) => {
+            const hash: string = row.getValue("hash")
+            return (
+                <Link to={`/tx/${hash}`} className="hover:opacity-80 transition-opacity">
+                    <HashDisplay
+                        hash={hash}
+                        variant="truncated"
+                        size="sm"
+                        startChars={6}
+                        endChars={6}
+                    />
+                </Link>
+            )
+        },
     },
     {
         accessorKey: "from",

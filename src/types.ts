@@ -30,6 +30,23 @@ export interface TransactionSummary {
     timestamp: string
 }
 
+export interface Transaction extends TransactionSummary {
+    size: number
+    weight: number
+    inputs: Array<{
+        prevOut: {
+            hash: string
+            value: number
+            addr?: string
+        }
+    }>
+    outputs: Array<{
+        value: number
+        addr?: string
+        script: string
+    }>
+}
+
 export interface NetworkStats {
     hashrate: string
     difficulty: string
