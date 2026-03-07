@@ -60,6 +60,15 @@ export async function fetchBlockTransactions(
     )
 }
 
+export async function fetchPaginatedTransactions(
+    page = 1,
+    limit = 10
+): Promise<PaginatedResponse<TransactionSummary>> {
+    return apiFetch<PaginatedResponse<TransactionSummary>>(
+        `/transactions?page=${page}&limit=${limit}`
+    )
+}
+
 export async function fetchLatestTransactions(
     count = 10
 ): Promise<TransactionSummary[]> {

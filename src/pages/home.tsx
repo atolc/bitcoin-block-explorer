@@ -15,10 +15,11 @@ import {
     Wallet,
     ArrowRight,
 } from "lucide-react"
-import { useLatestBlocks, useLatestTransactions } from "@/hooks/use-api"
+import { useLatestBlocks, usePaginatedTransactions } from "@/hooks/use-api"
 import { useSharedNetworkStats } from "@/layouts/root-layout"
 import { Link } from "react-router"
 import { Button } from "@/components/ui/button"
+import { useState } from "react"
 
 // ─── Skeleton Loader ───────────────────────────────────────────
 function Skeleton({ className = "" }: { className?: string }) {
@@ -33,8 +34,11 @@ export default function HomePage() {
         useSharedNetworkStats()
 
     const { data: blocks, loading: blocksLoading } = useLatestBlocks(4)
-    const { data: transactions, loading: txLoading } =
-        useLatestTransactions(10)
+
+    // Pagination state for transactions
+    const [txPage, setTxPage] = useState(1)
+    const txLimit = 10
+    const { data: txData, loading: txLoading } = usePaginatedTransactions(txPage, txLimit)
 
     const blockHeight = networkStats?.blockHeight ?? 0
     const hashrate = networkStats?.hashrate ?? "—"
@@ -193,10 +197,14 @@ export default function HomePage() {
                                     <Skeleton key={i} className="h-12" />
                                 ))}
                             </div>
-                        ) : transactions && transactions.length > 0 ? (
+                        ) : txData && txData.data.length > 0 ? (
                             <TransactionTable
-                                data={transactions}
-                                pageSize={5}
+                                data={txData.data}
+                                pageSize={txLimit}
+                                pageIndex={txPage - 1}
+                                pageCount={txData.totalPages}
+                                totalItems={txData.total}
+                                onPageChange={(index) => setTxPage(index + 1)}
                             />
                         ) : (
                             <p className="text-center text-muted-foreground py-8">

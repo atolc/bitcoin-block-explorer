@@ -1,6 +1,25 @@
 import type { Request, Response, NextFunction } from 'express';
-import { getLatestTransactions, getTransactionByHash } from '../services/transactions.service.js';
+import * as transactionsService from '../services/transactions.service.js';
 import { createApiError } from '../middlewares/error.middleware.js';
+
+/**
+ * GET /api/transactions
+ * Returns paginated unconfirmed transactions.
+ */
+export async function getPaginated(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const result = await transactionsService.getPaginatedTransactions(page, limit);
+        res.json({ success: true, data: result });
+    } catch (error) {
+        next(createApiError('Failed to fetch paginated transactions', 502, error));
+    }
+}
 
 /**
  * GET /api/transactions/latest
@@ -13,7 +32,7 @@ export async function getLatest(
 ): Promise<void> {
     try {
         const count = parseInt(req.query.count as string) || 10;
-        const transactions = await getLatestTransactions(count);
+        const transactions = await transactionsService.getLatestTransactions(count);
         res.json({ success: true, data: transactions });
     } catch (error) {
         next(createApiError('Failed to fetch latest transactions', 502, error));
@@ -35,7 +54,7 @@ export async function getByHash(
             res.status(400).json({ success: false, error: { message: 'Transaction hash is required' } });
             return;
         }
-        const transaction = await getTransactionByHash(hash);
+        const transaction = await transactionsService.getTransactionByHash(hash);
         res.json({ success: true, data: transaction });
     } catch (error) {
         next(createApiError('Failed to fetch transaction', 502, error));

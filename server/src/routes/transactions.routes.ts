@@ -3,6 +3,7 @@ import * as transactionsController from '../controllers/transactions.controller.
 
 const router = Router();
 
+router.get('/', transactionsController.getPaginated);
 router.get('/latest', transactionsController.getLatest);
 router.get('/:hash', transactionsController.getByHash);
 
