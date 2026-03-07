@@ -13,9 +13,12 @@ import {
     TrendingUp,
     Cpu,
     Wallet,
+    ArrowRight,
 } from "lucide-react"
 import { useLatestBlocks, useLatestTransactions } from "@/hooks/use-api"
 import { useSharedNetworkStats } from "@/layouts/root-layout"
+import { Link } from "react-router"
+import { Button } from "@/components/ui/button"
 
 // ─── Skeleton Loader ───────────────────────────────────────────
 function Skeleton({ className = "" }: { className?: string }) {
@@ -165,6 +168,14 @@ export default function HomePage() {
                                             block={block}
                                         />
                                     ))}
+                                </div>
+                                <div className="flex justify-end pt-2">
+                                    <Button asChild variant="ghost" className="text-bitcoin hover:text-bitcoin/80 hover:bg-bitcoin/10">
+                                        <Link to="/blocks">
+                                            View all blocks
+                                            <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
                                 </div>
                             </>
                         ) : (

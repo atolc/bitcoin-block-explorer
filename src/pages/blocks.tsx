@@ -1,4 +1,5 @@
 import { BlockCard } from "@/components/bitcoin/block-card"
+import { BlockTable } from "@/components/bitcoin/block-table"
 import { useLatestBlocks } from "@/hooks/use-api"
 import { useSharedNetworkStats } from "@/layouts/root-layout"
 import { Blocks as BlocksIcon } from "lucide-react"
@@ -10,7 +11,7 @@ function Skeleton({ className = "" }: { className?: string }) {
 }
 
 export default function BlocksPage() {
-    const { data: blocks, loading } = useLatestBlocks(8)
+    const { data: blocks, loading } = useLatestBlocks(50)
     const { data: networkStats } = useSharedNetworkStats()
 
     return (
@@ -51,12 +52,21 @@ export default function BlocksPage() {
                     </div>
                 </div>
             ) : blocks && blocks.length > 0 ? (
-                <div className="space-y-3">
-                    <BlockCard block={blocks[0]} variant="featured" />
-                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                        {blocks.slice(1).map((block) => (
-                            <BlockCard key={block.height} block={block} />
-                        ))}
+                <div className="space-y-8">
+                    <div className="space-y-3">
+                        <BlockCard block={blocks[0]} variant="featured" />
+                        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                            {blocks.slice(1, 4).map((block) => (
+                                <BlockCard key={block.height} block={block} />
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h2 className="font-heading text-xl font-bold tracking-tight">
+                            Older Blocks
+                        </h2>
+                        <BlockTable data={blocks.slice(4)} pageSize={10} />
                     </div>
                 </div>
             ) : (
