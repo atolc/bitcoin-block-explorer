@@ -1,17 +1,22 @@
+import { useState } from "react"
 import { useParams, Link } from "react-router"
-import { useBlock } from "@/hooks/use-api"
+import { useBlock, useBlockTransactions } from "@/hooks/use-api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { HashDisplay } from "@/components/bitcoin/hash-display"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Layers, ShieldCheck, Box } from "lucide-react"
+import { ArrowLeft, Layers, ShieldCheck, Box, ListFilter } from "lucide-react"
+import { TransactionTable } from "@/components/bitcoin/transaction-table"
 
 export default function BlockDetailPage() {
     const { hash } = useParams<{ hash: string }>()
     const { data: block, loading, error } = useBlock(hash)
 
+    const [txPage, setTxPage] = useState(1)
+    const { data: txData, loading: txLoading } = useBlockTransactions(hash, txPage, 10)
+
     if (loading) {
         return (
-            <div className="mx-auto max-w-5xl px-4 py-8 md:px-6 animate-pulse">
+            <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 animate-pulse">
                 <div className="h-8 w-32 bg-muted rounded mb-8"></div>
                 <div className="h-64 bg-muted rounded-xl"></div>
             </div>
@@ -20,7 +25,7 @@ export default function BlockDetailPage() {
 
     if (error || !block) {
         return (
-            <div className="mx-auto max-w-5xl px-4 py-8 md:px-6 text-center">
+            <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 text-center">
                 <h1 className="text-2xl font-bold mb-4">Block Not Found</h1>
                 <p className="text-muted-foreground mb-8">{error || "The requested block could not be found."}</p>
                 <Link to="/blocks" className="text-bitcoin hover:underline">
@@ -37,7 +42,7 @@ export default function BlockDetailPage() {
     }
 
     return (
-        <div className="mx-auto max-w-5xl px-4 py-8 md:px-6">
+        <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
             <Link to="/blocks" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Blocks
@@ -134,6 +139,28 @@ export default function BlockDetailPage() {
                         </div>
                     </CardContent>
                 </Card>
+            </div>
+
+            <div className="mt-8">
+                <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
+                    <ListFilter className="h-5 w-5 text-bitcoin" />
+                    Transactions
+                </h2>
+                {txLoading ? (
+                    <div className="h-64 bg-muted animate-pulse rounded-xl"></div>
+                ) : txData ? (
+                    <TransactionTable
+                        data={txData.data}
+                        pageCount={txData.totalPages}
+                        pageIndex={txPage - 1}
+                        onPageChange={(newIndex) => setTxPage(newIndex + 1)}
+                        totalItems={txData.total}
+                    />
+                ) : (
+                    <div className="text-muted-foreground p-4 bg-muted/30 rounded-lg text-center border border-border/50">
+                        Failed to load transactions.
+                    </div>
+                )}
             </div>
         </div>
     )

@@ -145,6 +145,10 @@ export interface TransactionTableProps
     columns?: ColumnDef<TransactionData>[]
     pageSize?: number
     showPagination?: boolean
+    pageCount?: number
+    pageIndex?: number
+    onPageChange?: (pageIndex: number) => void
+    totalItems?: number
 }
 
 const TransactionTable = React.forwardRef<HTMLDivElement, TransactionTableProps>(
@@ -155,6 +159,10 @@ const TransactionTable = React.forwardRef<HTMLDivElement, TransactionTableProps>
             columns = defaultColumns,
             pageSize = 10,
             showPagination = true,
+            pageCount,
+            pageIndex,
+            onPageChange,
+            totalItems,
             ...props
         },
         ref
@@ -163,9 +171,13 @@ const TransactionTable = React.forwardRef<HTMLDivElement, TransactionTableProps>
         const [columnVisibility, setColumnVisibility] =
             React.useState<VisibilityState>({})
 
+        const isManualPagination = pageCount !== undefined
+
         const table = useReactTable({
             data,
             columns,
+            pageCount: isManualPagination ? pageCount : undefined,
+            manualPagination: isManualPagination,
             getCoreRowModel: getCoreRowModel(),
             getSortedRowModel: getSortedRowModel(),
             getPaginationRowModel: getPaginationRowModel(),
@@ -174,13 +186,34 @@ const TransactionTable = React.forwardRef<HTMLDivElement, TransactionTableProps>
             state: {
                 sorting,
                 columnVisibility,
+                ...(isManualPagination && pageIndex !== undefined
+                    ? { pagination: { pageIndex, pageSize } }
+                    : {}),
             },
             initialState: {
-                pagination: {
-                    pageSize,
-                },
+                ...(!isManualPagination && {
+                    pagination: {
+                        pageSize,
+                    },
+                }),
             },
         })
+
+        const handlePreviousPage = () => {
+            if (isManualPagination && onPageChange && pageIndex !== undefined) {
+                onPageChange(Math.max(0, pageIndex - 1))
+            } else {
+                table.previousPage()
+            }
+        }
+
+        const handleNextPage = () => {
+            if (isManualPagination && onPageChange && pageIndex !== undefined) {
+                onPageChange(pageIndex + 1)
+            } else {
+                table.nextPage()
+            }
+        }
 
         return (
             <div ref={ref} className={cn("space-y-3", className)} {...props}>
@@ -253,12 +286,12 @@ const TransactionTable = React.forwardRef<HTMLDivElement, TransactionTableProps>
                                 {Math.min(
                                     (table.getState().pagination.pageIndex + 1) *
                                     table.getState().pagination.pageSize,
-                                    data.length
+                                    totalItems ?? data.length
                                 )}
                             </span>{" "}
                             of{" "}
                             <span className="font-medium text-foreground">
-                                {data.length.toLocaleString()}
+                                {(totalItems ?? data.length).toLocaleString()}
                             </span>{" "}
                             transactions
                         </p>
@@ -267,7 +300,7 @@ const TransactionTable = React.forwardRef<HTMLDivElement, TransactionTableProps>
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8"
-                                onClick={() => table.previousPage()}
+                                onClick={handlePreviousPage}
                                 disabled={!table.getCanPreviousPage()}
                             >
                                 <ChevronLeft className="h-4 w-4" />
@@ -280,7 +313,7 @@ const TransactionTable = React.forwardRef<HTMLDivElement, TransactionTableProps>
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8"
-                                onClick={() => table.nextPage()}
+                                onClick={handleNextPage}
                                 disabled={!table.getCanNextPage()}
                             >
                                 <ChevronRight className="h-4 w-4" />

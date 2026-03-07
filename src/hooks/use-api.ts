@@ -5,6 +5,7 @@ import {
     fetchPaginatedBlocks,
     fetchBlock,
     fetchLatestTransactions,
+    fetchBlockTransactions,
 } from "@/services/api"
 import { useApiConfig } from "@/providers/api-config-provider"
 import { THROTTLED_INTERVAL_MS } from "@/config/rate-limit.config"
@@ -155,4 +156,41 @@ export function useLatestTransactions(count = 10) {
         interval,
         [count]
     )
+}
+
+export function useBlockTransactions(hash: string | undefined, page: number, limit: number) {
+    const [state, setState] = useState<UseApiState<PaginatedResponse<TransactionSummary>>>({
+        data: null,
+        loading: true,
+        error: null,
+    })
+
+    useEffect(() => {
+        if (!hash) {
+            setState({ data: null, loading: false, error: null })
+            return
+        }
+
+        let mounted = true
+        setState((prev) => ({ ...prev, loading: true, error: null }))
+
+        fetchBlockTransactions(hash, page, limit)
+            .then((data) => {
+                if (mounted) setState({ data, loading: false, error: null })
+            })
+            .catch((err) => {
+                if (mounted)
+                    setState({
+                        data: null,
+                        loading: false,
+                        error: err instanceof Error ? err.message : "Unknown error",
+                    })
+            })
+
+        return () => {
+            mounted = false
+        }
+    }, [hash, page, limit])
+
+    return state
 }

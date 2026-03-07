@@ -1,5 +1,5 @@
 import { blockchainService } from './blockchain.service.js';
-import type { BlockSummary, BlockDetail, PaginatedResponse } from '../types/index.js';
+import type { BlockSummary, BlockDetail, PaginatedResponse, TransactionSummary } from '../types/index.js';
 
 // ─── Bitcoin Core REST response types ──────────────────────────
 
@@ -205,5 +205,73 @@ export async function getBlockByHashOrHeight(
         nonce: block.nonce,
         mediantime: new Date(block.mediantime * 1000),
         difficulty: block.difficulty,
+    };
+}
+
+export async function getBlockTransactionsPaginated(
+    identifier: string,
+    page = 1,
+    limit = 10
+): Promise<PaginatedResponse<TransactionSummary>> {
+    let blockHash: string;
+
+    if (/^\d+$/.test(identifier)) {
+        const hashResponse = await blockchainService.get<{ blockhash: string }>(
+            `/blockhashbyheight/${identifier}`
+        );
+        blockHash = hashResponse.blockhash;
+    } else {
+        blockHash = identifier;
+    }
+
+    // Fetch full block with tx details
+    const block = await blockchainService.get<{
+        time: number;
+        confirmations: number;
+        tx: Array<{
+            txid: string;
+            vin: Array<{ coinbase?: string; txid?: string }>;
+            vout: Array<{ value: number; scriptPubKey?: { address?: string } }>;
+        }>;
+    }>(`/block/${blockHash}`);
+
+    const totalTxs = block.tx.length;
+    const totalPages = Math.ceil(totalTxs / limit) || 1;
+
+    if (page < 1 || page > totalPages) {
+        return { data: [], total: totalTxs, page, limit, totalPages };
+    }
+
+    const startIndex = (page - 1) * limit;
+    const endIndex = Math.min(startIndex + limit, totalTxs);
+    const paginatedTxs = block.tx.slice(startIndex, endIndex);
+
+    const txSummaries: TransactionSummary[] = paginatedTxs.map((tx) => {
+        let totalValue = 0;
+        for (const out of tx.vout) {
+            totalValue += out.value || 0;
+        }
+
+        const isCoinbase = tx.vin.length > 0 && !!tx.vin[0].coinbase;
+        const from = isCoinbase ? 'Coinbase' : (tx.vin[0]?.txid || 'Unknown');
+        const to = tx.vout[0]?.scriptPubKey?.address || 'Multiple Outputs / Unknown';
+
+        return {
+            hash: tx.txid,
+            from,
+            to,
+            value: totalValue.toFixed(8),
+            fee: isCoinbase ? '0.00000000' : 'Unknown', // Estimating fees requires full UTXO lookups which is expensive without an indexer like Electrs
+            confirmations: block.confirmations,
+            timestamp: new Date(block.time * 1000).toISOString(),
+        };
+    });
+
+    return {
+        data: txSummaries,
+        total: totalTxs,
+        page,
+        limit,
+        totalPages
     };
 }

@@ -50,6 +50,16 @@ export async function fetchBlock(hash: string): Promise<BlockDetail> {
     return apiFetch<BlockDetail>(`/blocks/${hash}`)
 }
 
+export async function fetchBlockTransactions(
+    hash: string,
+    page = 1,
+    limit = 10
+): Promise<PaginatedResponse<TransactionSummary>> {
+    return apiFetch<PaginatedResponse<TransactionSummary>>(
+        `/blocks/${hash}/transactions?page=${page}&limit=${limit}`
+    )
+}
+
 export async function fetchLatestTransactions(
     count = 10
 ): Promise<TransactionSummary[]> {
