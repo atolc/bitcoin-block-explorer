@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { HashDisplay } from "./hash-display"
 import { Clock, Layers, ArrowRightLeft, HardDrive } from "lucide-react"
+import { Link } from "react-router"
 
 const blockCardVariants = cva(
     "group relative overflow-hidden transition-all duration-300 cursor-pointer",
@@ -59,88 +60,90 @@ function formatTime(timestamp: string | Date): string {
 const BlockCard = React.forwardRef<HTMLDivElement, BlockCardProps>(
     ({ className, variant, block, ...props }, ref) => {
         return (
-            <Card
-                ref={ref}
-                className={cn(blockCardVariants({ variant }), className)}
-                {...props}
-            >
-                {variant === "featured" && (
-                    <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-bitcoin/5 transition-transform duration-500 group-hover:scale-150" />
-                )}
-
-                <CardHeader
-                    className={cn(
-                        "flex flex-row items-center justify-between",
-                        variant === "compact" ? "p-3 pb-1" : "p-5 pb-2"
+            <Link to={`/block/${block.hash}`} className="block block-card-link">
+                <Card
+                    ref={ref}
+                    className={cn(blockCardVariants({ variant }), className)}
+                    {...props}
+                >
+                    {variant === "featured" && (
+                        <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-bitcoin/5 transition-transform duration-500 group-hover:scale-150" />
                     )}
-                >
-                    <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-bitcoin/10 font-heading text-sm font-bold text-bitcoin">
-                            <Layers className="h-4 w-4" />
-                        </div>
-                        <div>
-                            <span className="font-heading text-lg font-bold">
-                                #{block.height.toLocaleString()}
-                            </span>
-                        </div>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                        {block.confirmations !== undefined && (
-                            <Badge
-                                variant={block.confirmations > 6 ? "default" : "secondary"}
-                                className={cn(
-                                    block.confirmations > 6
-                                        ? "bg-success/10 text-success hover:bg-success/20"
-                                        : "bg-warning/10 text-warning hover:bg-warning/20"
-                                )}
-                            >
-                                {block.confirmations > 6
-                                    ? "Confirmed"
-                                    : `${block.confirmations} confirms`}
-                            </Badge>
+                    <CardHeader
+                        className={cn(
+                            "flex flex-row items-center justify-between",
+                            variant === "compact" ? "p-3 pb-1" : "p-5 pb-2"
                         )}
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {formatTime(block.timestamp)}
-                        </span>
-                    </div>
-                </CardHeader>
+                    >
+                        <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-bitcoin/10 font-heading text-sm font-bold text-bitcoin">
+                                <Layers className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <span className="font-heading text-lg font-bold">
+                                    #{block.height.toLocaleString()}
+                                </span>
+                            </div>
+                        </div>
 
-                <CardContent
-                    className={cn(variant === "compact" ? "p-3 pt-1" : "p-5 pt-2")}
-                >
-                    <div className="mb-3">
-                        <HashDisplay
-                            hash={block.hash}
-                            variant={variant === "compact" ? "short" : "truncated"}
-                            size="sm"
-                            className="text-muted-foreground"
-                        />
-                    </div>
+                        <div className="flex items-center gap-2">
+                            {block.confirmations !== undefined && (
+                                <Badge
+                                    variant={block.confirmations > 6 ? "default" : "secondary"}
+                                    className={cn(
+                                        block.confirmations > 6
+                                            ? "bg-success/10 text-success hover:bg-success/20"
+                                            : "bg-warning/10 text-warning hover:bg-warning/20"
+                                    )}
+                                >
+                                    {block.confirmations > 6
+                                        ? "Confirmed"
+                                        : `${block.confirmations} confirms`}
+                                </Badge>
+                            )}
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                {formatTime(block.timestamp)}
+                            </span>
+                        </div>
+                    </CardHeader>
 
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                            <ArrowRightLeft className="h-3 w-3" />
-                            <span className="font-medium text-foreground">
-                                {block.txCount.toLocaleString()}
-                            </span>{" "}
-                            txs
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <HardDrive className="h-3 w-3" />
-                            <span className="font-medium text-foreground">
-                                {formatSize(block.size)}
+                    <CardContent
+                        className={cn(variant === "compact" ? "p-3 pt-1" : "p-5 pt-2")}
+                    >
+                        <div className="mb-3">
+                            <HashDisplay
+                                hash={block.hash}
+                                variant={variant === "compact" ? "short" : "truncated"}
+                                size="sm"
+                                className="text-muted-foreground"
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                                <ArrowRightLeft className="h-3 w-3" />
+                                <span className="font-medium text-foreground">
+                                    {block.txCount.toLocaleString()}
+                                </span>{" "}
+                                txs
                             </span>
-                        </span>
-                        {block.miner && (
-                            <span className="ml-auto truncate max-w-[120px]">
-                                ⛏ {block.miner}
+                            <span className="flex items-center gap-1">
+                                <HardDrive className="h-3 w-3" />
+                                <span className="font-medium text-foreground">
+                                    {formatSize(block.size)}
+                                </span>
                             </span>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
+                            {block.miner && (
+                                <span className="ml-auto truncate max-w-[120px]">
+                                    ⛏ {block.miner}
+                                </span>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </Link>
         )
     }
 )

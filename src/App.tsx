@@ -5,6 +5,7 @@ import BlocksPage from "@/pages/blocks"
 import TransactionsPage from "@/pages/transactions"
 import StatsPage from "@/pages/stats"
 import NotFoundPage from "@/pages/not-found"
+import BlockDetailPage from "@/pages/block-detail"
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Route element={<RootLayout />}>
         <Route index element={<HomePage />} />
         <Route path="blocks" element={<BlocksPage />} />
+        <Route path="block/:hash" element={<BlockDetailPage />} />
         <Route path="transactions" element={<TransactionsPage />} />
         <Route path="stats" element={<StatsPage />} />
         <Route path="*" element={<NotFoundPage />} />

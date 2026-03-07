@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import {
     fetchNetworkStats,
     fetchLatestBlocks,
+    fetchBlock,
     fetchLatestTransactions,
 } from "@/services/api"
 import { useApiConfig } from "@/providers/api-config-provider"
@@ -9,6 +10,7 @@ import { THROTTLED_INTERVAL_MS } from "@/config/rate-limit.config"
 import type {
     NetworkStats,
     BlockSummary,
+    BlockDetail,
     TransactionSummary,
 } from "@/types"
 
@@ -76,6 +78,40 @@ export function useLatestBlocks(count = 4) {
         interval,
         [count]
     )
+}
+
+export function useBlock(hash?: string) {
+    const [state, setState] = useState<UseApiState<BlockDetail>>({
+        data: null,
+        loading: true,
+        error: null,
+    })
+
+    useEffect(() => {
+        if (!hash) return
+
+        let mounted = true
+        setState((prev) => ({ ...prev, loading: true, error: null }))
+
+        fetchBlock(hash)
+            .then((data) => {
+                if (mounted) setState({ data, loading: false, error: null })
+            })
+            .catch((err) => {
+                if (mounted)
+                    setState({
+                        data: null,
+                        loading: false,
+                        error: err instanceof Error ? err.message : "Unknown error",
+                    })
+            })
+
+        return () => {
+            mounted = false
+        }
+    }, [hash])
+
+    return state
 }
 
 export function useLatestTransactions(count = 10) {

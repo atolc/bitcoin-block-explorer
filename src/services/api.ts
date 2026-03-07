@@ -1,6 +1,7 @@
 import type {
     ApiResponse,
     BlockSummary,
+    BlockDetail,
     TransactionSummary,
     NetworkStats,
 } from "@/types"
@@ -35,6 +36,10 @@ export async function fetchLatestBlocks(
     count = 5
 ): Promise<BlockSummary[]> {
     return apiFetch<BlockSummary[]>(`/blocks/latest?count=${count}`)
+}
+
+export async function fetchBlock(hash: string): Promise<BlockDetail> {
+    return apiFetch<BlockDetail>(`/blocks/${hash}`)
 }
 
 export async function fetchLatestTransactions(

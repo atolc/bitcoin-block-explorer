@@ -1,18 +1,20 @@
 // ─── Block Types ───────────────────────────────────────────────
 
-export interface Block {
+export interface BlockDetail {
     height: number;
     hash: string;
-    timestamp: number;
+    timestamp: Date;
     txCount: number;
     size: number;
     weight: number;
     miner: string;
     confirmations: number;
-    previousHash: string;
+    previousHash?: string;
     merkleRoot: string;
-    bits: number;
+    bits: string;
     nonce: number;
+    mediantime: Date;
+    difficulty: number;
 }
 
 export interface BlockSummary {

@@ -1,5 +1,5 @@
 import { blockchainService } from './blockchain.service.js';
-import type { BlockSummary } from '../types/index.js';
+import type { BlockSummary, BlockDetail } from '../types/index.js';
 
 // ─── Bitcoin Core REST response types ──────────────────────────
 
@@ -106,7 +106,7 @@ export async function getLatestBlocks(count = 5): Promise<BlockSummary[]> {
 
 export async function getBlockByHashOrHeight(
     identifier: string
-): Promise<BlockSummary> {
+): Promise<BlockDetail> {
     let blockHash: string;
 
     if (/^\d+$/.test(identifier)) {
@@ -131,7 +131,14 @@ export async function getBlockByHashOrHeight(
         timestamp: new Date(block.time * 1000),
         txCount: block.nTx,
         size: block.size,
+        weight: block.weight,
         miner: identifyMiner(coinbaseText),
         confirmations: block.confirmations,
+        previousHash: block.previousblockhash,
+        merkleRoot: block.merkleroot,
+        bits: block.bits,
+        nonce: block.nonce,
+        mediantime: new Date(block.mediantime * 1000),
+        difficulty: block.difficulty,
     };
 }

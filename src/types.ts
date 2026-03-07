@@ -10,6 +10,16 @@ export interface BlockSummary {
     confirmations: number
 }
 
+export interface BlockDetail extends BlockSummary {
+    weight: number
+    previousHash?: string
+    merkleRoot: string
+    bits: string
+    nonce: number
+    mediantime: string
+    difficulty: number
+}
+
 export interface TransactionSummary {
     hash: string
     from: string
