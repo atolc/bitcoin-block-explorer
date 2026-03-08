@@ -5,6 +5,8 @@ import type {
     TransactionSummary,
     NetworkStats,
     PaginatedResponse,
+    Transaction,
+    AddressDetails,
 } from "@/types"
 
 // ─── Base Fetch ────────────────────────────────────────────────
@@ -79,6 +81,14 @@ export async function fetchLatestTransactions(
 
 export async function fetchTransaction(hash: string): Promise<Transaction> {
     return apiFetch<Transaction>(`/transactions/${hash}`)
+}
+
+export async function fetchAddress(address: string): Promise<AddressDetails> {
+    return apiFetch<AddressDetails>(`/addresses/${address}`)
+}
+
+export async function fetchAddressTransactions(address: string): Promise<TransactionSummary[]> {
+    return apiFetch<TransactionSummary[]>(`/addresses/${address}/transactions`)
 }
 
 // ─── Config ────────────────────────────────────────────────────

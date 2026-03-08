@@ -13,6 +13,26 @@ import {
     ArrowRightLeft,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+} from "recharts"
+
+const chartData = [
+    { name: "01:00", hashrate: 650 },
+    { name: "04:00", hashrate: 680 },
+    { name: "07:00", hashrate: 720 },
+    { name: "10:00", hashrate: 740 },
+    { name: "13:00", hashrate: 710 },
+    { name: "16:00", hashrate: 750 },
+    { name: "19:00", hashrate: 780 },
+    { name: "22:00", hashrate: 810 },
+]
 
 function Skeleton({ className = "" }: { className?: string }) {
     return (
@@ -115,6 +135,56 @@ export default function StatsPage() {
                     />
                 </div>
             )}
+
+            <div className="mt-8 rounded-xl border bg-card p-6 shadow-sm">
+                <div className="mb-6 flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-bold">Estimated Hashrate</h3>
+                        <p className="text-sm text-muted-foreground">Network processing power (EH/s) over the last 24h</p>
+                    </div>
+                </div>
+                <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                            <defs>
+                                <linearGradient id="colorHash" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#f7931a" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#f7931a" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.2)" />
+                            <XAxis
+                                dataKey="name"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                            />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: "hsl(var(--card))",
+                                    borderColor: "hsl(var(--border))",
+                                    borderRadius: "8px",
+                                    fontSize: "12px",
+                                    color: "hsl(var(--card-foreground))"
+                                }}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="hashrate"
+                                stroke="#f7931a"
+                                strokeWidth={2}
+                                fillOpacity={1}
+                                fill="url(#colorHash)"
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
 
             {/* Latest Block Hash */}
             {blocks && blocks.length > 0 && (

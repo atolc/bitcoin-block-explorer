@@ -8,6 +8,8 @@ import {
     fetchBlockTransactions,
     fetchPaginatedTransactions,
     fetchTransaction,
+    fetchAddress,
+    fetchAddressTransactions,
 } from "@/services/api"
 import { useApiConfig } from "@/providers/api-config-provider"
 import { THROTTLED_INTERVAL_MS } from "@/config/rate-limit.config"
@@ -18,6 +20,7 @@ import type {
     TransactionSummary,
     Transaction,
     PaginatedResponse,
+    AddressDetails,
 } from "@/types"
 
 // ─── Generic hook state ────────────────────────────────────────
@@ -260,6 +263,74 @@ export function useTransaction(hash?: string) {
             mounted = false
         }
     }, [hash])
+
+    return state
+}
+
+export function useAddress(address?: string) {
+    const [state, setState] = useState<UseApiState<AddressDetails>>({
+        data: null,
+        loading: true,
+        error: null,
+    })
+
+    useEffect(() => {
+        if (!address) return
+
+        let mounted = true
+        setState((prev) => ({ ...prev, loading: true, error: null }))
+
+        fetchAddress(address)
+            .then((data) => {
+                if (mounted) setState({ data, loading: false, error: null })
+            })
+            .catch((err) => {
+                if (mounted)
+                    setState({
+                        data: null,
+                        loading: false,
+                        error: err instanceof Error ? err.message : "Unknown error",
+                    })
+            })
+
+        return () => {
+            mounted = false
+        }
+    }, [address])
+
+    return state
+}
+
+export function useAddressTransactions(address?: string) {
+    const [state, setState] = useState<UseApiState<TransactionSummary[]>>({
+        data: null,
+        loading: true,
+        error: null,
+    })
+
+    useEffect(() => {
+        if (!address) return
+
+        let mounted = true
+        setState((prev) => ({ ...prev, loading: true, error: null }))
+
+        fetchAddressTransactions(address)
+            .then((data) => {
+                if (mounted) setState({ data, loading: false, error: null })
+            })
+            .catch((err) => {
+                if (mounted)
+                    setState({
+                        data: null,
+                        loading: false,
+                        error: err instanceof Error ? err.message : "Unknown error",
+                    })
+            })
+
+        return () => {
+            mounted = false
+        }
+    }, [address])
 
     return state
 }

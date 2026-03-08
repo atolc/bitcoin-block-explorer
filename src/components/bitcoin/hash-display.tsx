@@ -31,7 +31,8 @@ const hashDisplayVariants = cva(
     }
 )
 
-function truncateHash(hash: string, startChars = 8, endChars = 8): string {
+function truncateHash(hash: string | undefined | null, startChars = 8, endChars = 8): string {
+    if (!hash) return ""
     if (hash.length <= startChars + endChars + 3) return hash
     return `${hash.slice(0, startChars)}...${hash.slice(-endChars)}`
 }
@@ -39,7 +40,7 @@ function truncateHash(hash: string, startChars = 8, endChars = 8): string {
 export interface HashDisplayProps
     extends React.HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof hashDisplayVariants> {
-    hash: string
+    hash?: string | null
     copyable?: boolean
     linkTo?: string
     startChars?: number
@@ -71,6 +72,7 @@ const HashDisplay = React.forwardRef<HTMLSpanElement, HashDisplayProps>(
                     : truncateHash(hash, startChars, endChars)
 
         const handleCopy = async (e: React.MouseEvent) => {
+            if (!hash) return
             e.preventDefault()
             e.stopPropagation()
             await navigator.clipboard.writeText(hash)
@@ -118,7 +120,7 @@ const HashDisplay = React.forwardRef<HTMLSpanElement, HashDisplayProps>(
                             )}
                         </span>
                     </TooltipTrigger>
-                    {variant !== "full" && (
+                    {variant !== "full" && hash && (
                         <TooltipContent
                             side="top"
                             className="max-w-[400px] break-all font-mono text-xs"

@@ -39,8 +39,10 @@ type SearchType = "block" | "transaction" | "address" | "unknown"
 function detectSearchType(query: string): SearchType {
     const trimmed = query.trim()
     if (/^\d+$/.test(trimmed)) return "block"
-    if (/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(trimmed)) return "address"
-    if (/^bc1[a-zA-HJ-NP-Z0-9]{25,89}$/.test(trimmed)) return "address"
+    // Mainnet & Testnet Legacy/P2SH (1, 3, m, n, 2)
+    if (/^[13mn2][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(trimmed)) return "address"
+    // Mainnet & Testnet Bech32 (bc1, tb1)
+    if (/^(bc1|tb1)[a-zA-HJ-NP-Z0-9]{25,89}$/.test(trimmed)) return "address"
     if (/^[0-9a-fA-F]{64}$/.test(trimmed)) return "transaction"
     return "unknown"
 }

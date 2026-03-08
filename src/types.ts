@@ -56,6 +56,16 @@ export interface NetworkStats {
     unconfirmedTxs: number
 }
 
+export interface AddressDetails {
+    address: string
+    balance: number
+    received: number
+    sent: number
+    txCount: number
+    unconfirmedBalance: number
+    unconfirmedTxCount: number
+}
+
 // ─── API Response Wrapper ──────────────────────────────────────
 
 export interface PaginatedResponse<T> {
