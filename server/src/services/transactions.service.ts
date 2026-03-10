@@ -1,5 +1,5 @@
 import { blockchainService } from './blockchain.service.js';
-import type { TransactionSummary, PaginatedResponse } from '../types/index.js';
+import type { Transaction, TransactionSummary, PaginatedResponse } from '../types/index.js';
 
 // ─── Bitcoin Core REST response types ──────────────────────────
 

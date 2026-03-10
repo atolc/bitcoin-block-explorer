@@ -1,7 +1,12 @@
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { env } from './config/env.js';
 import { corsMiddleware, loggerMiddleware, errorMiddleware } from './middlewares/index.js';
 import apiRoutes from './routes/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ─── App Setup ─────────────────────────────────────────────────
 
@@ -17,6 +22,20 @@ app.use(express.urlencoded({ extended: true }));
 // ─── API Routes ────────────────────────────────────────────────
 
 app.use('/api', apiRoutes);
+
+// ─── Serve Static Files (Production) ───────────────────────────
+
+if (env.nodeEnv === 'production') {
+    const distPath = path.join(__dirname, '../../dist');
+    app.use(express.static(distPath));
+
+    app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api')) {
+            return next();
+        }
+        res.sendFile(path.join(distPath, 'index.html'));
+    });
+}
 
 // ─── 404 Handler ───────────────────────────────────────────────
 
