@@ -29,7 +29,8 @@ if (env.nodeEnv === 'production') {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
 
-    app.get('(.*)', (req, res, next) => {
+    // SPA catch-all: serve index.html for any request that hasn't been handled
+    app.use((req, res, next) => {
         if (req.path.startsWith('/api')) {
             return next();
         }
