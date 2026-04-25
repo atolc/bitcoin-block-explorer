@@ -68,12 +68,12 @@ export default function HomePage() {
                         <h1 className="font-heading text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
                             Explore the{" "}
                             <span className="bg-gradient-to-r from-bitcoin to-amber-600 bg-clip-text text-transparent">
-                                Bitcoin Testnet4
+                                Bitcoin
                             </span>
                         </h1>
                         <p className="mt-4 text-lg text-muted-foreground">
                             Search blocks, transactions, and addresses on the
-                            Bitcoin Testnet4 network in real-time.
+                            Bitcoin network in real-time.
                         </p>
                         <div className="mt-8">
                             <SearchBar variant="hero" onSearch={handleSearch} />
