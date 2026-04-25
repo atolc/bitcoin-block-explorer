@@ -21,6 +21,6 @@ COPY package*.json ./
 RUN npm ci
 COPY --from=frontend-builder /app/dist ./dist
 COPY --from=backend-builder /app/dist-server ./dist-server
-EXPOSE 3000
 ENV PORT=3000
+ENV APP_ENV=production
 CMD ["npm", "run", "start"]
