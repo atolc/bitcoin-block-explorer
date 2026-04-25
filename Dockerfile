@@ -1,26 +1,19 @@
-# Stage 1: Build Frontend
-FROM node:20-alpine AS frontend-builder
+# Single build stage
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npm run build
+RUN npm run build && npm run build:server
 
-# Stage 2: Build Backend
-FROM node:20-alpine AS backend-builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build:server
-
-# Stage 3: Production
+# Production stage
 FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
-COPY --from=frontend-builder /app/dist ./dist
-COPY --from=backend-builder /app/dist-server ./dist-server
+RUN npm ci --omit=dev
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/dist-server ./dist-server
+EXPOSE 3000
+ENV NODE_ENV=production
 ENV PORT=3000
-ENV APP_ENV=production
-CMD ["npm", "run", "start"]
+CMD ["node", "dist-server/index.js"]
