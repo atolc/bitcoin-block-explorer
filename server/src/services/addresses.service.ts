@@ -1,4 +1,5 @@
 import type { TransactionSummary } from '../types/index.js';
+import { env } from '../config/env.js';
 
 interface AddressInfo {
     address: string;
@@ -28,12 +29,12 @@ export interface AddressResponse {
     unconfirmedTxCount: number;
 }
 
-const MEMPOOL_API = 'https://mempool.space/testnet4/api';
+const ADDRESS_API_BASE = env.blockchain.apiUrl.replace(/\/+$/, '');
 
 export async function getAddressInfo(address: string): Promise<AddressResponse> {
-    const res = await fetch(`${MEMPOOL_API}/address/${address}`);
+    const res = await fetch(`${ADDRESS_API_BASE}/address/${encodeURIComponent(address)}`);
     if (!res.ok) {
-        throw new Error(`Failed to fetch address info from mempool.space: ${res.statusText}`);
+        throw new Error(`Failed to fetch address info: ${res.statusText}`);
     }
     const data = await res.json() as AddressInfo;
 
@@ -52,9 +53,9 @@ export async function getAddressInfo(address: string): Promise<AddressResponse> 
 }
 
 export async function getAddressTransactions(address: string): Promise<TransactionSummary[]> {
-    const res = await fetch(`${MEMPOOL_API}/address/${address}/txs`);
+    const res = await fetch(`${ADDRESS_API_BASE}/address/${encodeURIComponent(address)}/txs`);
     if (!res.ok) {
-        throw new Error(`Failed to fetch address transactions from mempool.space: ${res.statusText}`);
+        throw new Error(`Failed to fetch address transactions: ${res.statusText}`);
     }
     const txs = await res.json() as any[];
 
