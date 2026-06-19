@@ -2,7 +2,13 @@ node_modules
 dist
 dist-server
 .git
+.gitignore
 .env
-README.md
-Dockerfile
-.dockerignore
+.env.*
+!.env.example
+*.md
+skills
+.vscode
+.cursor
+coverage
+npm-debug.log*
